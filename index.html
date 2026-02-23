@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kiosk Controller</title>
 
 <style>
 html,body{
@@ -12,7 +11,6 @@ html,body{
     width:100%;
     overflow:hidden;
 }
-
 iframe{
     position:absolute;
     inset:0;
@@ -29,38 +27,32 @@ iframe{
 
 <script>
 
-const INTERACTIVE_URL = "https://example.com"; 
 const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
+const WEB_URL = "https://example.com";
+const TIMEOUT = 60000; // 60 sec
 
-const IDLE_TIME = 60000; // 60 sec
-
-let lastActivity = Date.now();
-let currentMode = "interactive";
+let current = "loop";
+let timer;
 
 const frame = document.getElementById("frame");
-frame.src = INTERACTIVE_URL;
+frame.src = LOOP_URL;
 
-function resetTimer(){
-    lastActivity = Date.now();
+function openWebsite(){
+    frame.src = WEB_URL;
+    current = "web";
 
-    if(currentMode === "loop"){
-        frame.src = INTERACTIVE_URL;
-        currentMode = "interactive";
-    }
+    clearTimeout(timer);
+    timer = setTimeout(()=>{
+        frame.src = LOOP_URL;
+        current = "loop";
+    }, TIMEOUT);
 }
 
-document.addEventListener("touchstart", resetTimer);
-document.addEventListener("mousemove", resetTimer);
-document.addEventListener("click", resetTimer);
-
-setInterval(()=>{
-    if(Date.now() - lastActivity > IDLE_TIME){
-        if(currentMode === "interactive"){
-            frame.src = LOOP_URL;
-            currentMode = "loop";
-        }
+document.addEventListener("click", ()=>{
+    if(current === "loop"){
+        openWebsite();
     }
-}, 2000);
+});
 
 </script>
 
