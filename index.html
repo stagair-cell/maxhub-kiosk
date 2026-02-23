@@ -3,50 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-  html,body{
-    margin:0;
-    height:100%;
-    width:100%;
-    overflow:hidden;
-    background:#000;
-  }
-  iframe{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    border:none;
-  }
+  html,body{margin:0;height:100%;width:100%;overflow:hidden;background:#000}
+  iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
-  /* Transparante kliklaag bovenop het iframe */
+  /* duidelijke kliklaag (even laten staan voor test) */
   #tapLayer{
-    position:absolute;
-    inset:0;
-    background:rgba(0,0,0,0); /* volledig transparant */
-    z-index:10;
-    touch-action: manipulation;
-  }
-
-  /* kleine badge (optioneel) */
-  #hint{
-    position:absolute;
-    left:16px;
-    bottom:14px;
-    z-index:11;
-    padding:8px 10px;
-    border-radius:10px;
-    background:rgba(0,0,0,.35);
-    color:#fff;
-    font-family: Arial, sans-serif;
-    font-size:14px;
+    position:absolute; inset:0;
+    background:rgba(255,0,0,0.10); /* licht rood zodat je weet dat hij er is */
+    z-index:9999;
+    touch-action:none;
+    -webkit-user-select:none;
     user-select:none;
+  }
+  #hint{
+    position:absolute; left:12px; bottom:12px; z-index:10000;
+    padding:8px 10px; border-radius:10px;
+    background:rgba(0,0,0,.55); color:#fff;
+    font:14px Arial;
     pointer-events:none;
   }
 </style>
 </head>
-
 <body>
 
 <iframe id="frame"></iframe>
@@ -56,7 +34,7 @@
 <script>
   const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
   const WEB_URL  = "https://example.com/";
-  const TIMEOUT  = 60000; // 60 sec
+  const TIMEOUT  = 60000;
 
   const frame = document.getElementById("frame");
   const tapLayer = document.getElementById("tapLayer");
@@ -65,42 +43,41 @@
   let mode = "loop";
   let timer = null;
 
-  // start met LoopSign
   frame.src = LOOP_URL;
 
   function showLoop(){
     mode = "loop";
     frame.src = LOOP_URL;
-
-    // kliklaag AAN (zodat tik werkt)
-    tapLayer.style.pointerEvents = "auto";
+    tapLayer.style.display = "block";
     hint.style.display = "block";
-
     if (timer) { clearTimeout(timer); timer = null; }
   }
 
   function showWeb(){
     mode = "web";
     frame.src = WEB_URL;
-
-    // kliklaag UIT (zodat je in de website kan klikken)
-    tapLayer.style.pointerEvents = "none";
+    tapLayer.style.display = "none";   // zodat je kan klikken in de website
     hint.style.display = "none";
-
     if (timer) clearTimeout(timer);
     timer = setTimeout(showLoop, TIMEOUT);
   }
 
-  // vang touch + muis
-  function handleTap(e){
-    e.preventDefault();
-    e.stopPropagation();
+  function fire(e){
+    // super agressief om kiosk-webviews te forceren
+    if (e) {
+      e.preventDefault?.();
+      e.stopPropagation?.();
+      e.stopImmediatePropagation?.();
+    }
     if (mode === "loop") showWeb();
   }
 
-  tapLayer.addEventListener("pointerdown", handleTap, { passive:false });
-  tapLayer.addEventListener("click", handleTap, { passive:false });
-
+  // Android kiosk: touchstart is vaak betrouwbaarder dan pointerdown
+  tapLayer.addEventListener("touchstart", fire, {capture:true, passive:false});
+  tapLayer.addEventListener("touchend", fire, {capture:true, passive:false});
+  tapLayer.addEventListener("mousedown", fire, {capture:true, passive:false});
+  tapLayer.addEventListener("click", fire, {capture:true, passive:false});
 </script>
+
 </body>
 </html>
