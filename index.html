@@ -1,150 +1,68 @@
-<!doctype html>
-<html lang="nl">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MAXHUB Kiosk</title>
-  <style>
-    html, body { height:100%; margin:0; background:#000; overflow:hidden; }
-    #stage { position:fixed; inset:0; }
-    .slide{
-      position:absolute; inset:0;
-      background-position:center;
-      background-size:cover;
-      opacity:0;
-      transition: opacity 900ms ease;
-    }
-    .slide.active{ opacity:1; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiosk Controller</title>
 
-    #hint{
-      position:fixed; left:24px; bottom:18px;
-      color:rgba(255,255,255,.85);
-      font: 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: rgba(0,0,0,.35);
-      padding:10px 12px; border-radius:12px;
-      border-radius:12px;
-      user-select:none;
-      z-index: 3;
-    }
+<style>
+html,body{
+    margin:0;
+    height:100%;
+    width:100%;
+    overflow:hidden;
+}
 
-    #overlay{
-      position:fixed; inset:0;
-      background:#000;
-      display:none;
-      z-index: 10;
-    }
-    #overlay.active{ display:block; }
-
-    iframe{
-      width:100%;
-      height:100%;
-      border:0;
-      display:block;
-      background:#000;
-    }
-
-    #timer{
-      position:fixed; top:14px; right:14px;
-      z-index: 11;
-      color:rgba(255,255,255,.9);
-      font: 14px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: rgba(0,0,0,.45);
-      padding:10px 12px; border-radius:12px;
-      user-select:none;
-      backdrop-filter: blur(6px);
-    }
-  </style>
+iframe{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:none;
+}
+</style>
 </head>
-<body>
-  <div id="stage"></div>
-  <div id="hint">Tik op het scherm voor info</div>
 
-  <div id="overlay">
-    <div id="timer">Terug in <span id="sec">60</span>s • Tik om terug te gaan</div>
-    <iframe id="frame" src="about:blank"></iframe>
-  </div>
+<body>
+
+<iframe id="frame"></iframe>
 
 <script>
-  const TARGET_URL = "https://example.com/";
-  const RETURN_SECONDS = 60;
 
-  // Zet hier je foto links (publiek bereikbaar)
-  const SLIDES = [
-    // "https://.../foto1.jpg",
-    // "https://.../foto2.jpg",
-    // "https://.../foto3.jpg"
-  ];
+const INTERACTIVE_URL = "https://example.com"; 
+const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
 
-  const SLIDE_SECONDS = 20;
+const IDLE_TIME = 60000; // 60 sec
 
-  const stage = document.getElementById("stage");
-  const overlay = document.getElementById("overlay");
-  const frame = document.getElementById("frame");
-  const secEl = document.getElementById("sec");
+let lastActivity = Date.now();
+let currentMode = "interactive";
 
-  let idx = 0;
-  let slidesEls = [];
-  let countdown = null;
-  let lastTap = 0;
+const frame = document.getElementById("frame");
+frame.src = INTERACTIVE_URL;
 
-  function buildSlides(){
-    if(!SLIDES.length){
-      document.getElementById("hint").textContent =
-        "Voeg foto-URLs toe in SLIDES (index.html).";
-      return;
+function resetTimer(){
+    lastActivity = Date.now();
+
+    if(currentMode === "loop"){
+        frame.src = INTERACTIVE_URL;
+        currentMode = "interactive";
     }
-    SLIDES.forEach((url, i) => {
-      const d = document.createElement("div");
-      d.className = "slide" + (i === 0 ? " active" : "");
-      d.style.backgroundImage = `url('${url}')`;
-      stage.appendChild(d);
-      slidesEls.push(d);
-    });
+}
 
-    setInterval(() => {
-      if (overlay.classList.contains("active")) return;
-      slidesEls[idx].classList.remove("active");
-      idx = (idx + 1) % slidesEls.length;
-      slidesEls[idx].classList.add("active");
-    }, SLIDE_SECONDS * 1000);
-  }
+document.addEventListener("touchstart", resetTimer);
+document.addEventListener("mousemove", resetTimer);
+document.addEventListener("click", resetTimer);
 
-  function closeOverlay(){
-    overlay.classList.remove("active");
-    frame.src = "about:blank";
-    if (countdown) { clearInterval(countdown); countdown = null; }
-  }
+setInterval(()=>{
+    if(Date.now() - lastActivity > IDLE_TIME){
+        if(currentMode === "interactive"){
+            frame.src = LOOP_URL;
+            currentMode = "loop";
+        }
+    }
+}, 2000);
 
-  function openOverlay(){
-    const now = Date.now();
-    if (now - lastTap < 600) return;
-    lastTap = now;
-
-    overlay.classList.add("active");
-    frame.src = TARGET_URL;
-
-    let left = RETURN_SECONDS;
-    secEl.textContent = String(left);
-
-    if (countdown) clearInterval(countdown);
-    countdown = setInterval(() => {
-      left -= 1;
-      secEl.textContent = String(left);
-      if (left <= 0) closeOverlay();
-    }, 1000);
-  }
-
-  window.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    if (!overlay.classList.contains("active")) openOverlay();
-  }, { passive:false });
-
-  overlay.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    closeOverlay();
-  }, { passive:false });
-
-  buildSlides();
 </script>
+
 </body>
 </html>
