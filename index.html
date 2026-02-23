@@ -5,56 +5,102 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-html,body{
+  html,body{
     margin:0;
     height:100%;
     width:100%;
     overflow:hidden;
-}
-iframe{
+    background:#000;
+  }
+  iframe{
     position:absolute;
     inset:0;
     width:100%;
     height:100%;
     border:none;
-}
+  }
+
+  /* Transparante kliklaag bovenop het iframe */
+  #tapLayer{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0); /* volledig transparant */
+    z-index:10;
+    touch-action: manipulation;
+  }
+
+  /* kleine badge (optioneel) */
+  #hint{
+    position:absolute;
+    left:16px;
+    bottom:14px;
+    z-index:11;
+    padding:8px 10px;
+    border-radius:10px;
+    background:rgba(0,0,0,.35);
+    color:#fff;
+    font-family: Arial, sans-serif;
+    font-size:14px;
+    user-select:none;
+    pointer-events:none;
+  }
 </style>
 </head>
 
 <body>
 
 <iframe id="frame"></iframe>
+<div id="tapLayer"></div>
+<div id="hint">Tik om website te openen</div>
 
 <script>
+  const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
+  const WEB_URL  = "https://example.com/";
+  const TIMEOUT  = 60000; // 60 sec
 
-const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
-const WEB_URL = "https://example.com";
-const TIMEOUT = 60000; // 60 sec
+  const frame = document.getElementById("frame");
+  const tapLayer = document.getElementById("tapLayer");
+  const hint = document.getElementById("hint");
 
-let current = "loop";
-let timer;
+  let mode = "loop";
+  let timer = null;
 
-const frame = document.getElementById("frame");
-frame.src = LOOP_URL;
+  // start met LoopSign
+  frame.src = LOOP_URL;
 
-function openWebsite(){
+  function showLoop(){
+    mode = "loop";
+    frame.src = LOOP_URL;
+
+    // kliklaag AAN (zodat tik werkt)
+    tapLayer.style.pointerEvents = "auto";
+    hint.style.display = "block";
+
+    if (timer) { clearTimeout(timer); timer = null; }
+  }
+
+  function showWeb(){
+    mode = "web";
     frame.src = WEB_URL;
-    current = "web";
 
-    clearTimeout(timer);
-    timer = setTimeout(()=>{
-        frame.src = LOOP_URL;
-        current = "loop";
-    }, TIMEOUT);
-}
+    // kliklaag UIT (zodat je in de website kan klikken)
+    tapLayer.style.pointerEvents = "none";
+    hint.style.display = "none";
 
-document.addEventListener("click", ()=>{
-    if(current === "loop"){
-        openWebsite();
-    }
-});
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(showLoop, TIMEOUT);
+  }
+
+  // vang touch + muis
+  function handleTap(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if (mode === "loop") showWeb();
+  }
+
+  tapLayer.addEventListener("pointerdown", handleTap, { passive:false });
+  tapLayer.addEventListener("click", handleTap, { passive:false });
 
 </script>
-
 </body>
 </html>
