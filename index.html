@@ -1,91 +1,73 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kiosk Controller</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiosk Controller</title>
 
-  <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      background: #000;
-    }
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #000;
+}
 
-    iframe {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-
-    /* Volledig transparante kliklaag (alleen actief in LoopSign modus) */
-    #hotspot {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      background: rgba(0,0,0,0);
-      touch-action: manipulation;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-  </style>
+/* onzichtbare kliklaag voor starten */
+#startLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0,0,0,0);
+  touch-action: manipulation;
+}
+</style>
 </head>
 
 <body>
 
-  <iframe id="frame"></iframe>
-  <div id="hotspot"></div>
+<div id="startLayer"></div>
 
-  <script>
-    const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
-    const WEB_URL  = "https://sb.geboortelijst.be";
-    const TIMEOUT  = 60 * 1000; // 60 seconden
+<script>
+const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
+const WEB_URL  = "https://sb.geboortelijst.be";
+const TIMEOUT  = 60 * 1000;
 
-    const frame = document.getElementById("frame");
-    const hotspot = document.getElementById("hotspot");
+let inactivityTimer;
 
-    let mode = "loop";
-    let timer = null;
+// Start met LoopSign
+if (!sessionStorage.getItem("mode")) {
+  sessionStorage.setItem("mode", "loop");
+  window.location.href = LOOP_URL;
+}
 
-    function showLoop() {
-      mode = "loop";
-      frame.src = LOOP_URL;
-      hotspot.style.display = "block";
+// Wanneer terugkomt van website
+if (window.location.href.includes("sb.geboortelijst")) {
+  sessionStorage.setItem("mode", "web");
+}
 
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    }
+// Start website bij klik
+document.getElementById("startLayer")?.addEventListener("pointerup", () => {
+  sessionStorage.setItem("mode", "web");
+  window.location.href = WEB_URL;
+});
 
-    function showWeb() {
-      mode = "web";
-      frame.src = WEB_URL;
+// Inactivity detectie
+function resetTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    sessionStorage.setItem("mode", "loop");
+    window.location.href = LOOP_URL;
+  }, TIMEOUT);
+}
 
-      // Zet hotspot uit zodat website volledig klikbaar is
-      hotspot.style.display = "none";
+["mousemove","keydown","scroll","touchstart","click"].forEach(evt => {
+  document.addEventListener(evt, resetTimer, true);
+});
 
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(showLoop, TIMEOUT);
-    }
-
-    function openWebsite(e) {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-      if (mode === "loop") showWeb();
-    }
-
-    hotspot.addEventListener("pointerup", openWebsite, { passive: false });
-    hotspot.addEventListener("touchend", openWebsite, { passive: false });
-    hotspot.addEventListener("click", openWebsite, { passive: false });
-
-    // Start met LoopSign
-    showLoop();
-  </script>
+resetTimer();
+</script>
 
 </body>
 </html>
