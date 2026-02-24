@@ -5,68 +5,60 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Kiosk Home</title>
   <style>
-    html,body{margin:0;height:100%;width:100%;overflow:hidden;background:#000;font-family:Arial}
-    /* Fullscreen kliklaag bovenop “home” */
+    html,body{
+      margin:0;height:100%;width:100%;
+      overflow:hidden;background:#000;
+      font-family:Arial, sans-serif;
+    }
+
+    /* LoopSign fullscreen */
+    iframe{
+      position:fixed; inset:0;
+      width:100%; height:100%;
+      border:0;
+    }
+
+    /* Fullscreen tap layer: tik = open website */
     #tap{
       position:fixed; inset:0;
-      background:rgba(0,0,0,0);
+      background:rgba(0,0,0,0); /* onzichtbaar */
       touch-action:manipulation;
+      user-select:none;
+      -webkit-user-select:none;
+      z-index:9999;
     }
-    /* kleine terugknop (alleen in web-modus) */
-    #back{
-      position:fixed; top:16px; right:16px;
-      padding:12px 14px;
-      border:0; border-radius:14px;
-      background:rgba(0,0,0,.55);
-      color:#fff; font-weight:700;
-      display:none; z-index:9999;
-    }
-    /* iframe enkel voor LoopSign “home” (mag) */
-    iframe{position:fixed; inset:0; width:100%; height:100%; border:0}
   </style>
 </head>
 <body>
 
-<iframe id="homeFrame"></iframe>
-<div id="tap"></div>
-<button id="back" type="button">Terug</button>
+  <iframe id="homeFrame"></iframe>
+  <div id="tap" aria-label="Open geboortelijst"></div>
 
-<script>
-  const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
-  const WEB_URL  = "https://sb.geboortelijst.be";
+  <script>
+    // HOME (screensaver) = LoopSign
+    const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
 
-  // Modus via URL parameter: ?mode=home of ?mode=web
-  const params = new URLSearchParams(location.search);
-  const mode = params.get("mode") || "home";
+    // INTERACTIEF = geboortelijst
+    const WEB_URL  = "https://sb.geboortelijst.be";
 
-  const homeFrame = document.getElementById("homeFrame");
-  const tap = document.getElementById("tap");
-  const back = document.getElementById("back");
+    const homeFrame = document.getElementById("homeFrame");
+    const tap = document.getElementById("tap");
 
-  function goHome(){
-    // terug naar home controller (blijft in GitHub)
-    location.href = `${location.pathname}?mode=home&v=${Date.now()}`;
-  }
-
-  function goWeb(){
-    // ga naar website (zelfde tab). Windows kiosk blijft fullscreen.
-    location.href = WEB_URL;
-  }
-
-  if (mode === "home") {
-    // Home = LoopSign in iframe, klik ergens -> website
+    // Toon LoopSign altijd als home
     homeFrame.src = LOOP_URL;
-    tap.style.display = "block";
-    back.style.display = "none";
 
-    tap.addEventListener("click", (e)=>{ e.preventDefault(); goWeb(); }, {passive:false});
-    tap.addEventListener("touchend", (e)=>{ e.preventDefault(); goWeb(); }, {passive:false});
-  }
+    // Open website bij klik/tik
+    function openWebsite(e){
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      // open in dezelfde tab (Windows kiosk blijft fullscreen)
+      location.href = WEB_URL;
+    }
 
-  // Als je op de website zit, kan deze GitHub code niet draaien (andere site).
-  // Daarom: terug naar home kan je NIET via code afdwingen zonder kiosk-software.
-  // Oplossing op Windows: gebruik kiosk reset (min 5 min) of een aparte kiosk browser die terugknop injecteert.
-</script>
+    tap.addEventListener("click", openWebsite, { passive:false });
+    tap.addEventListener("touchend", openWebsite, { passive:false });
+    tap.addEventListener("pointerup", openWebsite, { passive:false });
+  </script>
 
 </body>
 </html>
