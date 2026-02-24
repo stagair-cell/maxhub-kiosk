@@ -1,66 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="nl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-  html,body{margin:0;height:100%;width:100%;overflow:hidden;background:#000}
-  iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MAXHUB Controller</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: #000;
+    }
 
-  /* Onzichtbare klikzone rechtsonder */
-  #hotspot{
-    position:fixed;
-    right:0;
-    bottom:0;
-    width:220px;   /* pas aan indien nodig */
-    height:140px;  /* pas aan indien nodig */
-    z-index:99999;
-    background:rgba(0,0,0,0); /* volledig transparant */
-    touch-action:manipulation;
-  }
-</style>
+    /* Laat LoopSign/website fullscreen zien */
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    /* Onzichtbare hotspot rechtsonder (alleen actief op LoopSign) */
+    #hotspot {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      width: 220px;     /* pas grootte aan indien nodig */
+      height: 140px;    /* pas grootte aan indien nodig */
+      z-index: 99999;
+      background: rgba(0,0,0,0); /* transparant */
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  </style>
 </head>
+
 <body>
-  <iframe id="frame"></iframe>
-  <div id="hotspot"></div>
+  <iframe id="frame" src="about:blank"></iframe>
+  <div id="hotspot" aria-label="Open website"></div>
 
-<script>
-  const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
-  const WEB_URL  = "https://example.com/";
-  const TIMEOUT  = 60000;
+  <script>
+    // URLs
+    const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
+    const WEB_URL  = "https://example.com/";
+    const TIMEOUT_MS = 60 * 1000; // 60 seconden
 
-  const frame = document.getElementById("frame");
-  const hotspot = document.getElementById("hotspot");
+    const frame = document.getElementById("frame");
+    const hotspot = document.getElementById("hotspot");
 
-  let timer = null;
-  let mode = "loop";
+    let mode = "loop";
+    let timer = null;
 
-  function showLoop(){
-    mode = "loop";
-    frame.src = LOOP_URL;
-    hotspot.style.display = "block";   // klikzone actief
-    if (timer) { clearTimeout(timer); timer = null; }
-  }
+    function showLoop() {
+      mode = "loop";
+      frame.src = LOOP_URL;
 
-  function showWeb(){
-    mode = "web";
-    frame.src = WEB_URL;
-    hotspot.style.display = "none";    // website moet klikbaar blijven
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(showLoop, TIMEOUT);
-  }
+      // hotspot aan (zodat je kan “openen”)
+      hotspot.style.display = "block";
 
-  function go(e){
-    e.preventDefault?.();
-    e.stopPropagation?.();
-    if (mode === "loop") showWeb();
-  }
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
 
-  hotspot.addEventListener("pointerup", go, {passive:false});
-  hotspot.addEventListener("touchend", go, {passive:false});
-  hotspot.addEventListener("click", go, {passive:false});
+    function showWeb() {
+      mode = "web";
+      frame.src = WEB_URL;
 
-  showLoop();
-</script>
+      // hotspot uit zodat de website normaal klikbaar blijft
+      hotspot.style.display = "none";
+
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(showLoop, TIMEOUT_MS);
+    }
+
+    function openWebsite(e) {
+      // Zorgt dat touch/muis betrouwbaar werkt
+      if (e) {
+        e.preventDefault?.();
+        e.stopPropagation?.();
+      }
+      if (mode === "loop") showWeb();
+    }
+
+    // Touch + muis events
+    hotspot.addEventListener("pointerup", openWebsite, { passive: false });
+    hotspot.addEventListener("touchend", openWebsite, { passive: false });
+    hotspot.addEventListener("click", openWebsite, { passive: false });
+
+    // Start standaard met LoopSign
+    showLoop();
+  </script>
 </body>
 </html>
