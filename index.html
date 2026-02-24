@@ -7,41 +7,22 @@
   html,body{margin:0;height:100%;width:100%;overflow:hidden;background:#000}
   iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
-  /* Grote vaste touch-knop */
-  #openBtn{
+  /* Onzichtbare klikzone rechtsonder */
+  #hotspot{
     position:fixed;
-    right:22px;
-    bottom:22px;
+    right:0;
+    bottom:0;
+    width:220px;   /* pas aan indien nodig */
+    height:140px;  /* pas aan indien nodig */
     z-index:99999;
-    padding:18px 22px;
-    border-radius:18px;
-    border:none;
-    background:rgba(255,255,255,.88);
-    color:#000;
-    font:700 18px Arial, sans-serif;
-    box-shadow:0 10px 30px rgba(0,0,0,.35);
+    background:rgba(0,0,0,0); /* volledig transparant */
     touch-action:manipulation;
-  }
-
-  #badge{
-    position:fixed;
-    left:14px;
-    bottom:14px;
-    z-index:99999;
-    padding:10px 12px;
-    border-radius:12px;
-    background:rgba(0,0,0,.55);
-    color:#fff;
-    font:14px Arial;
-    pointer-events:none;
   }
 </style>
 </head>
 <body>
-
-<iframe id="frame"></iframe>
-<button id="openBtn">Open website</button>
-<div id="badge">LoopSign • knop rechts onder</div>
+  <iframe id="frame"></iframe>
+  <div id="hotspot"></div>
 
 <script>
   const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
@@ -49,8 +30,7 @@
   const TIMEOUT  = 60000;
 
   const frame = document.getElementById("frame");
-  const btn = document.getElementById("openBtn");
-  const badge = document.getElementById("badge");
+  const hotspot = document.getElementById("hotspot");
 
   let timer = null;
   let mode = "loop";
@@ -58,29 +38,27 @@
   function showLoop(){
     mode = "loop";
     frame.src = LOOP_URL;
-    btn.style.display = "block";
-    badge.textContent = "LoopSign • knop rechts onder";
+    hotspot.style.display = "block";   // klikzone actief
     if (timer) { clearTimeout(timer); timer = null; }
   }
 
   function showWeb(){
     mode = "web";
     frame.src = WEB_URL;
-    btn.style.display = "none";          // website is interactief
-    badge.textContent = "Website open • terug in 60s (of refresh)";
+    hotspot.style.display = "none";    // website moet klikbaar blijven
     if (timer) clearTimeout(timer);
     timer = setTimeout(showLoop, TIMEOUT);
   }
 
-  // Touch-zeker: pointerup + touchend + click
   function go(e){
     e.preventDefault?.();
     e.stopPropagation?.();
     if (mode === "loop") showWeb();
   }
-  btn.addEventListener("pointerup", go, {passive:false});
-  btn.addEventListener("touchend", go, {passive:false});
-  btn.addEventListener("click", go, {passive:false});
+
+  hotspot.addEventListener("pointerup", go, {passive:false});
+  hotspot.addEventListener("touchend", go, {passive:false});
+  hotspot.addEventListener("click", go, {passive:false});
 
   showLoop();
 </script>
