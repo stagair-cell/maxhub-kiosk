@@ -1,72 +1,66 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kiosk Controller</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-html, body {
-  margin: 0;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  background: #000;
+html,body{
+  margin:0;
+  height:100%;
+  width:100%;
+  overflow:hidden;
+  background:#000;
 }
-
-/* onzichtbare kliklaag voor starten */
-#startLayer {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  background: rgba(0,0,0,0);
-  touch-action: manipulation;
+iframe{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:0;
+}
+#hotspot{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,0,0,0);
 }
 </style>
 </head>
-
 <body>
 
-<div id="startLayer"></div>
+<iframe id="frame"></iframe>
+<div id="hotspot"></div>
 
 <script>
 const LOOP_URL = "https://play.loopsign.eu/app/4146/313638";
 const WEB_URL  = "https://sb.geboortelijst.be";
 const TIMEOUT  = 60 * 1000;
 
-let inactivityTimer;
+const frame = document.getElementById("frame");
+const hotspot = document.getElementById("hotspot");
 
-// Start met LoopSign
-if (!sessionStorage.getItem("mode")) {
-  sessionStorage.setItem("mode", "loop");
-  window.location.href = LOOP_URL;
+let timer = null;
+let mode = "loop";
+
+function showLoop(){
+  mode = "loop";
+  frame.src = LOOP_URL;
+  hotspot.style.display = "block";
+  if(timer) clearTimeout(timer);
 }
 
-// Wanneer terugkomt van website
-if (window.location.href.includes("sb.geboortelijst")) {
-  sessionStorage.setItem("mode", "web");
+function showWeb(){
+  mode = "web";
+  frame.src = WEB_URL;
+  hotspot.style.display = "none";
+  if(timer) clearTimeout(timer);
+  timer = setTimeout(showLoop, TIMEOUT);
 }
 
-// Start website bij klik
-document.getElementById("startLayer")?.addEventListener("pointerup", () => {
-  sessionStorage.setItem("mode", "web");
-  window.location.href = WEB_URL;
-});
+hotspot.addEventListener("click", showWeb);
+hotspot.addEventListener("touchstart", showWeb);
 
-// Inactivity detectie
-function resetTimer() {
-  clearTimeout(inactivityTimer);
-  inactivityTimer = setTimeout(() => {
-    sessionStorage.setItem("mode", "loop");
-    window.location.href = LOOP_URL;
-  }, TIMEOUT);
-}
-
-["mousemove","keydown","scroll","touchstart","click"].forEach(evt => {
-  document.addEventListener(evt, resetTimer, true);
-});
-
-resetTimer();
+showLoop();
 </script>
 
 </body>
